@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gerenciador de Produtos</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f9f9f9;
+      margin: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .lista {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 30px;
+      gap: 20px;
+    }
+
+    .produto {
+      width: 240px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 10px;
+      text-align: center;
+    }
+
+    .produto img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .produto h3 {
+      margin: 10px 0 5px;
+    }
+
+    .produto p {
+      margin: 4px 0;
+      font-size: 14px;
+    }
+
+    .produto button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      width: 45%;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .produto .edit {
+      background: #ffc107;
+      border: none;
+      color: #fff;
+    }
+
+    .produto .delete {
+      background: #dc3545;
+      border: none;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <h1>Gerenciador de Produtos</h1>
+
+  <a href="index.html">vitrine </a><p
+
+  <form id="form-produto">
+    <input type="hidden" id="produto-id">
+    <input type="text" id="nome" placeholder="Nome do Produto" required>
+    <input type="number" id="preco" placeholder="Preço" step="0.01" required>
+    <input type="number" id="quantidade" placeholder="Quantidade" required>
+    <input type="file" id="imagem" accept="image/*">
+    <button type="submit">Salvar Produto</button>
+  </form>
+
+  <div class="lista" id="lista-produtos"></div>
+
+  <script>
+    const lista = document.getElementById('lista-produtos');
+    const form = document.getElementById('form-produto');
+    let produtos = JSON.parse(localStorage.getItem("produtos") || "[]");
+
+    function exibirProdutos() {
+      lista.innerHTML = '';
+      produtos.forEach((produto, index) => {
+        const div = document.createElement('div');
+        div.className = 'produto';
+        div.innerHTML = `
+          <img src="${produto.imagem}" alt="${produto.nome}">
+          <h3>${produto.nome}</h3>
+          <p>Preço: R$ ${parseFloat(produto.preco).toFixed(2)}</p>
+          <p>Qtd: ${produto.quantidade}</p>
+          <button class="edit" onclick="editarProduto(${index})">Editar</button>
+          <button class="delete" onclick="deletarProduto(${index})">Excluir</button>
+        `;
+        lista.appendChild(div);
+      });
+    }
+
+    function editarProduto(index) {
+      const produto = produtos[index];
+      document.getElementById('produto-id').value = index;
+      document.getElementById('nome').value = produto.nome;
+      document.getElementById('preco').value = produto.preco;
+      document.getElementById('quantidade').value = produto.quantidade;
+    }
+
+    function deletarProduto(index) {
+      if (confirm("Deseja excluir este produto?")) {
+        produtos.splice(index, 1);
+        salvarLista();
+      }
+    }
+
+    function salvarLista() {
+      localStorage.setItem("produtos", JSON.stringify(produtos));
+      exibirProdutos();
+      form.reset();
+      document.getElementById('produto-id').value = "";
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const nome = document.getElementById('nome').value;
+      const preco = document.getElementById('preco').value;
+      const quantidade = document.getElementById('quantidade').value;
+      const imagemInput = document.getElementById('imagem');
+      const id = document.getElementById('produto-id').value;
+
+      const reader = new FileReader();
+      reader.onload = function () {
+        const imagemBase64 = reader.result;
+
+        const produto = { nome, preco, quantidade, imagem: imagemBase64 };
+
+        if (id) {
+          produtos[id] = produto;
+        } else {
+          produtos.push(produto);
+        }
+
+        salvarLista();
+      };
+
+      if (imagemInput.files[0]) {
+        reader.readAsDataURL(imagemInput.files[0]);
+      } else {
+        const produtoExistente = id ? produtos[id] : null;
+        const imagem = produtoExistente ? produtoExistente.imagem : '';
+        const produto = { nome, preco, quantidade, imagem };
+
+        if (id) {
+          produtos[id] = produto;
+        } else {
+          produtos.push(produto);
+        }
+
+        salvarLista();
+      }
+    });
+
+    exibirProdutos();
+  </script>
+</body>
+</html>
